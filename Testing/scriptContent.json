@@ -1,0 +1,108 @@
+{
+    "properties": {
+        "name": "setvmextension",
+        "displayName": "Set Virtual Machine Extension",
+        "mode": "All",
+        "description": "Set Virtual Machine Extension",
+        "policyType": "Custom",
+        "parameters": {},
+        "policyRule": {
+            "if": {
+                "allOf": [
+                    {
+                        "field": "type",
+                        "equals": "Microsoft.Compute/virtualMachines"
+                    }
+                ]
+            },
+            "then": {
+                "effect": "deployIfNotExists",
+                "details": {
+                    "type": "Microsoft.Compute/virtualMachines/extensions",
+                    "name": "install-agent",
+                    "roleDefinitionIds": [
+                        "/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+                    ],
+                    "deploymentScope": "subscription",
+                    "deployment": {
+                        "location": "australiaeast",
+                        "properties": {
+                            "mode": "Incremental",
+                            "template": {
+                                "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+                                "contentVersion": "1.0.0.0",
+                                "parameters": {
+                                    "timeNow": {
+                                        "type": "String",
+                                        "defaultValue": "[utcNow()]"
+                                    },
+                                    "resourceGroupName": {
+                                        "type": "String"
+                                    }
+                                },
+                                "variables": {},
+                                "resources": [
+                                    {
+                                        "name": "[concat('deploymentScript-',parameters('timeNow'))]",
+                                        "type": "Microsoft.Resources/deployments",
+                                        "apiVersion": "2019-10-01",
+                                        "resourceGroup": "[parameters('resourceGroupName')]",
+                                        "expressionEvaluationOptions": {
+                                            "scope": "inner"
+                                        },
+                                        "properties": {
+                                            "mode": "Incremental",
+                                            "template": {
+                                                "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                                                "contentVersion": "1.0.0.0",
+                                                "parameters": {
+                                                    "timeNow": {
+                                                        "type": "String"
+                                                    }
+                                                },
+                                                "resources": [
+                                                    {
+                                                        "type": "Microsoft.Resources/deploymentScripts",
+                                                        "apiVersion": "2019-10-01-preview",
+                                                        "name": "[concat('deploymentScript-',parameters('timeNow'))]",
+                                                        "location": "australiaeast",
+                                                        "kind": "AzurePowerShell",
+                                                        "identity": {
+                                                            "type": "UserAssigned",
+                                                            "userAssignedIdentities": {
+                                                                "/subscriptions/6eefc58d-424e-4476-a608-41660be3ea5e/resourceGroups/UpdateManagement/providers/Microsoft.ManagedIdentity/userAssignedIdentities/policyMI": {}
+                                                            }
+                                                        },
+                                                        "properties": {
+                                                            "forceUpdateTag": "1",
+                                                            "azPowerShellVersion": "4.1",
+                                                            "retentionInterval": "P1D",
+                                                            "cleanupPreference": "OnSuccess",
+                                                            "scriptContent": "Set-AzVMAccessExtension -ResourceGroupName 'wem-test-core' -VMName 'policytestvm' -Name 'myVMAccess' -Location EastUS"
+                                                        }
+                                                    }
+                                                ],
+                                                "outputs": {}
+                                            },
+                                            "parameters": {
+                                                "timeNow": {
+                                                    "value": "[parameters('timeNow')]"
+                                                }
+                                            }
+                                        }
+                                    }
+                                ],
+                                "outputs": {}
+                            },
+                            "parameters": {
+                                "resourceGroupName": {
+                                    "value": "[resourceGroup().name]"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
